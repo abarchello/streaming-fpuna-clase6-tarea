@@ -218,9 +218,7 @@ pipeline sólo garantice *at-least-once*.
 
 ## Evidencia de ejecución
 
-Suite completa y chequeos de estilo (la captura es anterior a las pruebas de
-casos límite; la salida actual con las 34 pruebas está en
-[`docs/evidencia_pytest.txt`](docs/evidencia_pytest.txt)):
+Suite completa (34 pruebas) y chequeos de estilo:
 
 ![pytest, ruff y marimo check](docs/capturas/01_pytest_y_checks.png)
 
