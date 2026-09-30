@@ -7,8 +7,9 @@ las funciones del notebook están implementadas y el resto del proyecto
 (`pyproject.toml`, `uv.lock`, `Dockerfile`, `docker-compose.yml`, los datos y
 las pruebas provistas) quedó igual.
 
-Las 19 pruebas pasan: las 13 que venían con la tarea y 6 que agregué con
-`TestStream`. La salida de pytest está en
+Las 34 pruebas pasan: las 13 que venían con la tarea, 6 que agregué con
+`TestStream` y 15 de casos límite (bordes de ventana y de lateness, entradas
+inválidas, equivalencia oráculo-Beam). La salida de pytest está en
 [`docs/evidencia_pytest.txt`](docs/evidencia_pytest.txt), la de los chequeos
 de estilo en [`docs/evidencia_checks.txt`](docs/evidencia_checks.txt) y las
 capturas de pantalla en [`docs/capturas/`](docs/capturas/) (ver
@@ -28,7 +29,7 @@ tarde, y aunque la escritura del resultado tenga que reintentarse.
 git clone https://github.com/abarchello/streaming-fpuna-clase6-tarea.git
 cd streaming-fpuna-clase6-tarea
 uv sync --frozen                   # crea .venv con las versiones de uv.lock
-uv run pytest -v                   # suite completa (19 pruebas)
+uv run pytest -v                   # suite completa (34 pruebas)
 uv run marimo run notebook.py      # notebook en modo app, con la evidencia
 uv run marimo edit notebook.py     # o en modo editor
 uv run ruff check notebook.py tests
@@ -115,6 +116,26 @@ streaming con `TestStream`, donde el watermark lo muevo yo:
 | Timer de limpieza | `test_timer_handler_clears_state` | `test_expiry_timer_clears_dedup_state_in_streaming` |
 | Escritura repetida | `test_retries_converge_to_one_materialized_entity`, `test_append_only_sink_materializes_every_attempt` | (no aplica: el sink es una simulación en Python) |
 
+Además, `tests/test_casos_limite.py` cubre los bordes que la consigna no
+pide explícitamente:
+
+| Caso límite | Prueba |
+|---|---|
+| Offset explícito (`-03:00`) normalizado a UTC | `test_parse_utc_normalizes_explicit_offset_to_utc` |
+| Vacío, basura, sin zona horaria o `None` lanzan `ValueError` | `test_parse_utc_rejects_invalid_or_naive_values` (5 casos) |
+| Ventana `[inicio, fin)`: 13:01:00 abre la ventana siguiente | `test_window_start_is_inclusive_and_end_is_exclusive` |
+| Un segundo antes y un segundo después de `window_end + lateness` | `test_lateness_boundary_one_second_each_side` |
+| Un evento a tiempo no es revisión | `test_on_time_event_is_not_a_revision` |
+| Un `PENDING` no ocupa estado: su versión `CONFIRMED` posterior cuenta | `test_non_confirmed_event_does_not_consume_dedup_state` |
+| Sin deduplicación el duplicado se cuenta dos veces | `test_disabling_deduplication_double_counts` |
+| Un pane late (30 → 35) pisa la fila en UPSERT; en append se suman (65) | `test_late_revision_overwrites_previous_row_in_upsert_sink` |
+| `attempts=0` es un error | `test_sink_rejects_zero_attempts` |
+| El pipeline Beam en batch coincide fila por fila con el oráculo sin descartes por lateness | `test_beam_batch_pipeline_matches_oracle_without_lateness_drops` |
+
+La última prueba es la que ata las dos implementaciones: sobre el dataset
+real, el oráculo en Python con tolerancia enorme y el pipeline Beam (donde en
+batch el watermark salta a +∞) producen exactamente los mismos totales.
+
 La prueba del timer en streaming merece una aclaración. Para que el borrado
 se vea desde afuera, armo una ventana que acepta datos tardíos durante 300 s
 y un `DeduplicatePayments` que expira su estado a los 0 s. Cuando el
@@ -197,7 +218,9 @@ pipeline sólo garantice *at-least-once*.
 
 ## Evidencia de ejecución
 
-Suite completa y chequeos de estilo:
+Suite completa y chequeos de estilo (la captura es anterior a las pruebas de
+casos límite; la salida actual con las 34 pruebas está en
+[`docs/evidencia_pytest.txt`](docs/evidencia_pytest.txt)):
 
 ![pytest, ruff y marimo check](docs/capturas/01_pytest_y_checks.png)
 
@@ -217,6 +240,7 @@ notebook.py                   # implementación y evidencia (Marimo)
 data/payments.jsonl           # dataset de la tarea, sin cambios
 tests/test_assignment.py      # pruebas provistas
 tests/test_streaming_panes.py # 6 pruebas propias con TestStream
+tests/test_casos_limite.py    # 15 pruebas propias de casos límite
 docs/evidencia_pytest.txt     # salida de `uv run pytest -v`
 docs/evidencia_checks.txt     # salida de ruff y marimo check
 docs/capturas/                # capturas de pantalla de la ejecución

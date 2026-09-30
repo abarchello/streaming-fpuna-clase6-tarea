@@ -41,8 +41,8 @@ def _(mo):
 
     **Ventanas, estado por clave y efectos externos idempotentes**
 
-    Este notebook es un esqueleto. Las celdas de código contienen firmas,
-    contratos y excepciones `NotImplementedError`; no incluyen la solución.
+    Las consignas del esqueleto original se mantienen como texto; todas las
+    funciones están implementadas y la evidencia de ejecución está al final.
 
     ## Problema
 
@@ -549,16 +549,17 @@ def _(mo):
     uv run pytest
     ```
 
-    Al comienzo deben fallar con `NotImplementedError`. Implementá las
-    funciones hasta que estas garantías queden verdes:
+    Al comienzo fallaban con `NotImplementedError`. Estado actual, todas
+    verdes (además de las pruebas propias en `test_streaming_panes.py` y
+    `test_casos_limite.py`):
 
-    - [ ] un duplicado no modifica el total;
-    - [ ] claves distintas no comparten estado;
-    - [ ] un evento fuera de orden cae en su ventana de evento;
-    - [ ] un evento con atraso aceptado produce una revisión;
-    - [ ] un evento demasiado tardío queda auditado;
-    - [ ] dos escrituras del mismo resultado dejan una sola entidad;
-    - [ ] el timer limpia el estado cuando corresponde.
+    - [x] un duplicado no modifica el total;
+    - [x] claves distintas no comparten estado;
+    - [x] un evento fuera de orden cae en su ventana de evento;
+    - [x] un evento con atraso aceptado produce una revisión;
+    - [x] un evento demasiado tardío queda auditado;
+    - [x] dos escrituras del mismo resultado dejan una sola entidad;
+    - [x] el timer limpia el estado cuando corresponde.
     """)
     return
 
